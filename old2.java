@@ -43,29 +43,24 @@ public class CountTriangle {
       throws IOException, InterruptedException
     {
     	Iterator<LongWritable> itrVal = values.iterator();
-      Set<LongWritable> set = new HashSet<LongWritable>();
-      while (itrVal.hasNext()) {
-        LongWritable temp = itrVal.next();
-        set.add(new LongWritable(temp.get()));
-			}
+    	long val1 = itrVal.next().get();
+    	rKey.set(key.toString() + "," + Long.toString(val1));
+    	context.write(rKey, zero);
+    	while (itrVal.hasNext()) {
+    		long val2 = itrVal.next().get();
+    		rKey.set(key.toString() + "," + Long.toString(val2));
+    		context.write(rKey, zero);
 
-			Iterator<LongWritable> setIterator = set.iterator();
-			List<LongWritable> unique = new ArrayList<LongWritable>();
-			while(setIterator.hasNext()){
-        LongWritable temp = setIterator.next();
-        unique.add(new LongWritable(temp.get()));
-
-				context.write(new Text(key.toString() + "," + temp.toString()), zero);
-      }
-    	for (int i = 0; i < unique.size(); i++) {
-        for (int j = i + 1; j < unique.size(); j++) {
-          if (unique.get(i).get() < unique.get(j).get()) {
-            context.write(new Text(unique.get(i).toString() + "," + unique.get(j).toString()), one);
-          } else {
-            context.write(new Text(unique.get(j).toString() + "," + unique.get(i).toString()), one);
-          }
-        }
-			}
+  			if (val1 != val2) {
+  				if (val1 < val2) {
+  					rKey.set(Long.toString(val1) + "," + Long.toString(val2));
+  				} else {
+  					rKey.set(Long.toString(val2) + "," + Long.toString(val1));
+  				}
+  				context.write(rKey, one);
+  			}
+  			val1 = val2;
+    	}
     }
   }
 
@@ -142,47 +137,48 @@ public class CountTriangle {
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
 
-    Job job1 = Job.getInstance(conf, "TAHU BULAT DIGORENG DADAKAN first step");
-    job1.setJarByClass(CountTriangle.class);
-    job1.setMapperClass(UndirectedMapper.class);
-    job1.setReducerClass(TriadsReducer.class);
+  //   Job job1 = Job.getInstance(conf, "TAHU BULAT DIGORENG DADAKAN first step");
+  //   job1.setJarByClass(CountTriangle.class);
+  //   job1.setMapperClass(UndirectedMapper.class);
+  //   job1.setReducerClass(TriadsReducer.class);
 
-    job1.setMapOutputKeyClass(LongWritable.class);
-		job1.setMapOutputValueClass(LongWritable.class);
-    job1.setOutputKeyClass(Text.class);
-    job1.setOutputValueClass(LongWritable.class);
+  //   job1.setMapOutputKeyClass(LongWritable.class);
+		// job1.setMapOutputValueClass(LongWritable.class);
+  //   job1.setOutputKeyClass(Text.class);
+  //   job1.setOutputValueClass(LongWritable.class);
 
-    FileInputFormat.addInputPath(job1, new Path(args[0]));
-    FileOutputFormat.setOutputPath(job1, new Path("/user/m/output1"));
+  //   FileInputFormat.addInputPath(job1, new Path(args[0]));
+  //   FileOutputFormat.setOutputPath(job1, new Path("/user/m/output1"));
 
-    Job job2 = Job.getInstance(conf, "TAHU BULAT DIGORENG DADAKAN second step");
-    job2.setJarByClass(CountTriangle.class);
-    job2.setMapperClass(ParseTextLongPairsMapper.class);
-    job2.setReducerClass(CountTrianglesReducer.class);
-
-    job2.setMapOutputKeyClass(Text.class);
-		job2.setMapOutputValueClass(LongWritable.class);
-    job2.setOutputKeyClass(LongWritable.class);
-    job2.setOutputValueClass(LongWritable.class);
-
-    FileInputFormat.addInputPath(job2, new Path("/user/m/output1"));
-    FileOutputFormat.setOutputPath(job2, new Path("/user/m/output2"));
-
-    Job job3 = Job.getInstance(conf, "TAHU BULAT DIGORENG DADAKAN aggregate results");
+    Job job3 = Job.getInstance(conf, "TAHU BULAT DIGORENG DADAKAN second step");
     job3.setJarByClass(CountTriangle.class);
     job3.setMapperClass(ParseTextLongPairsMapper.class);
-    job3.setReducerClass(AggregateCountsReducer.class);
+    job3.setReducerClass(CountTrianglesReducer.class);
 
     job3.setMapOutputKeyClass(Text.class);
-    job3.setMapOutputValueClass(LongWritable.class);
+		job3.setMapOutputValueClass(LongWritable.class);
     job3.setOutputKeyClass(LongWritable.class);
     job3.setOutputValueClass(LongWritable.class);
 
-    FileInputFormat.setInputPaths(job3, new Path("/user/m/output2"));
-		FileOutputFormat.setOutputPath(job3, new Path("/user/m/output3"));
+    FileInputFormat.addInputPath(job3, new Path("/user/m/output1"));
+    FileOutputFormat.setOutputPath(job3, new Path("/user/m/output2"));
 
-    int ret = job1.waitForCompletion(true) ? 0 : 1;
-    if (ret==0) ret = job2.waitForCompletion(true) ? 0 : 1;
-    if (ret==0) ret = job3.waitForCompletion(true) ? 0 : 1;
+    Job job4 = Job.getInstance(conf, "TAHU BULAT DIGORENG DADAKAN aggregate results");
+    job4.setJarByClass(CountTriangle.class);
+    job4.setMapperClass(ParseTextLongPairsMapper.class);
+    job4.setReducerClass(AggregateCountsReducer.class);
+
+    job4.setMapOutputKeyClass(Text.class);
+    job4.setMapOutputValueClass(LongWritable.class);
+    job4.setOutputKeyClass(LongWritable.class);
+    job4.setOutputValueClass(LongWritable.class);
+
+    FileInputFormat.setInputPaths(job4, new Path("/user/m/output2"));
+		FileOutputFormat.setOutputPath(job4, new Path("/user/m/output3"));
+
+    // int ret = job1.waitForCompletion(true) ? 0 : 1;
+    // if (ret==0) ret = job3.waitForCompletion(true) ? 0 : 1;
+    int ret = job3.waitForCompletion(true) ? 0 : 1;
+    if (ret==0) ret = job4.waitForCompletion(true) ? 0 : 1;
   }
 }
