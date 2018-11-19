@@ -107,19 +107,19 @@ public class CountTriangle {
         throws IOException, InterruptedException
     {
       boolean hasZero = false;
-      boolean hasOne = false;
       Iterator<LongWritable> vs = values.iterator();
       // Triad edge value=1, original edge value=0.
+      int c = 0;
       while (vs.hasNext()) {
         long temp = vs.next().get();
         if (temp == 0) {
         	hasZero = true;
         } else {
-        	hasOne = true;
+        	c++;
         }
       }
-      if (hasZero && hasOne) {
-      	count++;
+      if (hasZero) {
+      	count += c;
       }
     }
   }
